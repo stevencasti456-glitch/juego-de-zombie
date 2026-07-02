@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://xilofqs2lcs7"]
+
+[ext_resource type="Script" uid="uid://csso4fpn1aafm" path="res://scripts/Zombie.gd" id="1_1vlb3"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_eyj0i"]
+radius = 0.4
+
+[node name="Zombie" type="CharacterBody3D" unique_id=500233765 groups=["Zombie"]]
+script = ExtResource("1_1vlb3")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1618878663]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=865400650]
+shape = SubResource("CylinderShape3D_eyj0i")

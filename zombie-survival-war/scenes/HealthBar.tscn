@@ -1,0 +1,125 @@
+[gd_scene format=3 uid="uid://by25xl5ogrb7d"]
+
+[ext_resource type="Script" uid="uid://3sbrhie2sgff" path="res://scripts/Island.gd" id="1_8p41q"]
+[ext_resource type="Script" uid="uid://odjr5bmtgm0q" path="res://scripts/Player.gd" id="2_6xj70"]
+[ext_resource type="PackedScene" uid="uid://xilofqs2lcs7" path="res://scenes/Zombie.tscn" id="3_p3jmp"]
+
+[sub_resource type="Environment" id="Environment_eyj0i"]
+fog_enabled = true
+fog_light_color = Color(0.039215688, 0.05882353, 0.11764706, 1)
+fog_density = 0.005
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_6ykuk"]
+geometry_parsed_geometry_type = 1
+geometry_source_geometry_mode = 1
+geometry_source_group_name = &"navigation"
+agent_height = 2.0
+agent_max_climb = 0.5
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_eyj0i"]
+size = Vector2(2000, 2000)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kysn4"]
+transparency = 1
+albedo_color = Color(0.019607844, 0.101960786, 0.2, 1)
+metallic = 0.8
+roughness = 0.1
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_6ykuk"]
+radius = 0.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
+albedo_color = Color(0.4916376, 0.6143694, 1, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_eyj0i"]
+material = SubResource("StandardMaterial3D_h2yge")
+
+[node name="Main" type="Node3D" unique_id=1108607685]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1571483792]
+environment = SubResource("Environment_eyj0i")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=636025189]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, 200, 100)
+shadow_enabled = true
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=112333807]
+navigation_mesh = SubResource("NavigationMesh_6ykuk")
+
+[node name="Island" type="Node3D" parent="NavigationRegion3D" unique_id=1923299808]
+script = ExtResource("1_8p41q")
+
+[node name="Terrain" type="StaticBody3D" parent="NavigationRegion3D/Island" unique_id=675954493 groups=["Navigation"]]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="NavigationRegion3D/Island/Terrain" unique_id=249039935]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="NavigationRegion3D/Island/Terrain" unique_id=1471110477]
+
+[node name="Ocean" type="MeshInstance3D" parent="NavigationRegion3D/Island" unique_id=869874313]
+transform = Transform3D(0.9999999, 0, 0, 0, 1.0000001, 0, 0, 0, 1.0000001, 0, 0, 0)
+mesh = SubResource("PlaneMesh_eyj0i")
+surface_material_override/0 = SubResource("StandardMaterial3D_kysn4")
+
+[node name="RocksContainer" type="Node3D" parent="NavigationRegion3D/Island" unique_id=592420004]
+
+[node name="VegetationContainer" type="Node3D" parent="NavigationRegion3D/Island" unique_id=821566087]
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1633014300 groups=["Player"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25, 0)
+script = ExtResource("2_6xj70")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=127213494]
+shape = SubResource("CylinderShape3D_6ykuk")
+
+[node name="CameraPivot" type="Node3D" parent="Player" unique_id=1788794327]
+
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot" unique_id=468461176]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 5)
+
+[node name="UI" type="CanvasLayer" parent="Player" unique_id=266692329]
+
+[node name="Crosshair" type="ColorRect" parent="Player/UI" unique_id=1010941618]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -4.0
+offset_top = -4.0
+offset_right = 4.0
+offset_bottom = 4.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 0, 0, 0.8)
+
+[node name="JumpButton" type="Button" parent="Player/UI" unique_id=492900377]
+offset_left = 1011.0
+offset_top = 483.0
+offset_right = 1065.0
+offset_bottom = 514.0
+text = "Saltar"
+
+[node name="CrouchButton" type="Button" parent="Player/UI" unique_id=1335982724]
+offset_left = 994.0
+offset_top = 419.0
+offset_right = 1083.0
+offset_bottom = 450.0
+text = "Agacharse"
+
+[node name="ShootButton" type="Button" parent="Player/UI" unique_id=1871129316]
+offset_left = 838.0
+offset_top = 397.0
+offset_right = 923.0
+offset_bottom = 477.0
+text = "DISPARAR"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Player" unique_id=993973938]
+mesh = SubResource("CylinderMesh_eyj0i")
+
+[node name="Zombie" parent="." unique_id=1612897889 instance=ExtResource("3_p3jmp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 25, 20)
+
+[connection signal="pressed" from="Player/UI/JumpButton" to="Player" method="_on_jump_button_pressed"]
+[connection signal="button_down" from="Player/UI/CrouchButton" to="Player" method="_on_crouch_button_button_down"]
+[connection signal="button_up" from="Player/UI/CrouchButton" to="Player" method="_on_crouch_button_button_up"]
+[connection signal="pressed" from="Player/UI/ShootButton" to="Player" method="_on_shoot_button_pressed"]

@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://de5txww0tl4rv"]
+
+[sub_resource type="Gradient" id="Gradient_iwqyq"]
+offsets = PackedFloat32Array(0.9939759, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_eyj0i"]
+gradient = SubResource("Gradient_iwqyq")
+width = 100
+height = 10
+
+[sub_resource type="Gradient" id="Gradient_1bvlm"]
+colors = PackedColorArray(0, 1, 0, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_kysn4"]
+gradient = SubResource("Gradient_1bvlm")
+width = 100
+height = 10
+
+[node name="HealthBar" type="Node3D" unique_id=1733343718]
+
+[node name="Background" type="Sprite3D" parent="." unique_id=1497762503]
+billboard = 1
+texture = SubResource("GradientTexture2D_eyj0i")
+
+[node name="Fill" type="Sprite3D" parent="." unique_id=700674564]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
+billboard = 1
+texture = SubResource("GradientTexture2D_kysn4")
