@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://p4ev3y1tf0w5"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_6ykuk"]
+size = Vector3(0.08, 0.12, 0.25)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eyj0i"]
+albedo_color = Color(0.42352942, 0.42352942, 0.42352942, 1)
+metallic = 0.7
+roughness = 0.4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_6ykuk"]
+top_radius = 0.015
+bottom_radius = 0.015
+height = 0.15
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kysn4"]
+albedo_color = Color(0.3491902, 0.3491902, 0.3491902, 1)
+metallic = 0.9
+roughness = 0.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_eyj0i"]
+size = Vector3(0.06, 0.15, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v6fa7"]
+albedo_color = Color(0.6651851, 0.5370987, 0.3491902, 1)
+roughness = 0.8
+
+[node name="PistolModel" type="Node3D" unique_id=1627706016]
+
+[node name="Body" type="MeshInstance3D" parent="." unique_id=1431856506]
+mesh = SubResource("BoxMesh_6ykuk")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyj0i")
+
+[node name="Barrel" type="MeshInstance3D" parent="." unique_id=1030455323]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0.04, 0.18)
+mesh = SubResource("CylinderMesh_6ykuk")
+surface_material_override/0 = SubResource("StandardMaterial3D_kysn4")
+
+[node name="Gip" type="MeshInstance3D" parent="." unique_id=1225555753]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, 0.25881904, 0, -0.25881904, 0.9659258, 0, -0.1, -0.05)
+mesh = SubResource("BoxMesh_eyj0i")
+surface_material_override/0 = SubResource("StandardMaterial3D_v6fa7")
+
+[node name="Muzzle" type="Marker3D" parent="." unique_id=1510823057]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0.26)
