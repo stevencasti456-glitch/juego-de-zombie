@@ -1,12 +1,12 @@
-[gd_scene format=3 uid="uid://crfhf7lskvpsa"]
+[gd_scene format=3 uid="uid://cgrx8dqsmx5fa"]
 
-[ext_resource type="Script" uid="uid://odjr5bmtgm0q" path="res://scripts/Player.gd" id="1_h2yge"]
-[ext_resource type="Script" uid="uid://3sbrhie2sgff" path="res://scripts/Island.gd" id="3_lquwl"]
-[ext_resource type="PackedScene" uid="uid://cyr63lwefh8t1" path="res://GameUI.tscn" id="4_1bvp3"]
-[ext_resource type="AudioStream" uid="uid://bv73uyk6ge805" path="res://assets/audio/ambient/ambient_wind.wav" id="4_lquwl"]
-[ext_resource type="Script" uid="uid://cxk1ob8dn30x5" path="res://scripts/biomes/BiomeManager.gd" id="5_lquwl"]
-[ext_resource type="Script" uid="uid://cwcw4x6hx0oj4" path="res://scripts/poi/POIManager.gd" id="6_7mycd"]
-[ext_resource type="Script" uid="uid://js212hm86oc1" path="res://scripts/loot/LootItem.gd" id="7_272bh"]
+[ext_resource type="Script" uid="uid://3sbrhie2sgff" path="res://scripts/Island.gd" id="1_4hdw0"]
+[ext_resource type="Script" uid="uid://odjr5bmtgm0q" path="res://scripts/Player.gd" id="2_1ml8k"]
+[ext_resource type="PackedScene" uid="uid://cyr63lwefh8t1" path="res://GameUI.tscn" id="3_kn1e6"]
+[ext_resource type="AudioStream" uid="uid://bv73uyk6ge805" path="res://assets/audio/ambient/ambient_wind.wav" id="4_ggyp7"]
+[ext_resource type="Script" uid="uid://cxk1ob8dn30x5" path="res://scripts/biomes/BiomeManager.gd" id="5_0tarv"]
+[ext_resource type="Script" uid="uid://cwcw4x6hx0oj4" path="res://scripts/poi/POIManager.gd" id="6_3pq43"]
+[ext_resource type="Script" uid="uid://dvnumat5b1kq7" path="res://scripts/inventory/Inventory.gd" id="7_4hdw0"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_eyj0i"]
 sky_top_color = Color(0.384, 0.455, 0.651, 1)
@@ -111,7 +111,7 @@ directional_shadow_max_distance = 200.0
 navigation_mesh = SubResource("NavigationMesh_6ykuk")
 
 [node name="Island" type="Node3D" parent="NavigationRegion3D" unique_id=1923299808]
-script = ExtResource("3_lquwl")
+script = ExtResource("1_4hdw0")
 
 [node name="Terrain" type="StaticBody3D" parent="NavigationRegion3D/Island" unique_id=675954493 groups=["navigation"]]
 
@@ -132,7 +132,7 @@ surface_material_override/0 = SubResource("StandardMaterial3D_kysn4")
 
 [node name="Player" type="CharacterBody3D" parent="." unique_id=1633014300 groups=["Player"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, 0)
-script = ExtResource("1_h2yge")
+script = ExtResource("2_1ml8k")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=127213494]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
@@ -159,7 +159,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(1, 0, 0, 0.8)
 
-[node name="GameUI" parent="Player" unique_id=1161807695 instance=ExtResource("4_1bvp3")]
+[node name="GameUI" parent="Player" unique_id=1161807695 instance=ExtResource("3_kn1e6")]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Player" unique_id=993973938]
 mesh = SubResource("CylinderMesh_eyj0i")
@@ -181,14 +181,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5, 0)
 shape = SubResource("BoxShape3D_floor")
 
 [node name="AmbientSound" type="AudioStreamPlayer3D" parent="." unique_id=2051959118]
-stream = ExtResource("4_lquwl")
+stream = ExtResource("4_ggyp7")
 autoplay = true
 
 [node name="BiomeManager" type="Node3D" parent="." unique_id=2027316084]
-script = ExtResource("5_lquwl")
+script = ExtResource("5_0tarv")
 
 [node name="POIManager" type="Node3D" parent="." unique_id=174785489]
-script = ExtResource("6_7mycd")
+script = ExtResource("6_3pq43")
 
-[node name="AmmoLoot" type="Area3D" parent="." unique_id=1841781049]
-script = ExtResource("7_272bh")
+[node name="Inventory" type="CanvasLayer" parent="." unique_id=1996876762]
+script = ExtResource("7_4hdw0")

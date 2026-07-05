@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://caf0iyqhl6pok"]
+
+[ext_resource type="Script" uid="uid://js212hm86oc1" path="res://scripts/loot/LootItem.gd" id="1_c2726"]
+
+[node name="MedkitLoot" type="Area3D" unique_id=1318470342]
+script = ExtResource("1_c2726")
+amount = 25

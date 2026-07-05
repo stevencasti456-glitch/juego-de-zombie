@@ -78,10 +78,21 @@ func generate_island_mesh() -> void:
 	var mdt = MeshDataTool.new()
 	mdt.create_from_surface(array_mesh, 0)
 
+	# ← NUEVO: Referencia al BiomeManager
+	var biome_manager = get_node_or_null("/root/Main/BiomeManager")
+
 	for i in range(mdt.get_vertex_count()):
 		var vertex = mdt.get_vertex(i)
 		vertex.y = get_terrain_height(vertex.x, vertex.z)
 		mdt.set_vertex(i, vertex)
+		
+		# ← NUEVO: Color del bioma para cada vértice
+		if biome_manager:
+			var biome_color = biome_manager.get_terrain_color(vertex)
+			mdt.set_vertex_color(i, biome_color)
+		else:
+			# Color por defecto si no hay BiomeManager
+			mdt.set_vertex_color(i, Color(0.08, 0.22, 0.06))
 
 	array_mesh.clear_surfaces()
 	mdt.commit_to_surface(array_mesh)
@@ -92,10 +103,10 @@ func generate_island_mesh() -> void:
 	var final_mesh = surface_tool.commit()
 
 	var material = StandardMaterial3D.new()
-	material.albedo_color = Color(0.08, 0.22, 0.06)
+	material.albedo_color = Color(1.0, 1.0, 1.0)  # ← NUEVO: Blanco para que se vean los colores de vértice
 	material.roughness = 0.95
 	material.metallic = 0.0
-	material.vertex_color_use_as_albedo = true
+	material.vertex_color_use_as_albedo = true  # ← NUEVO: Usar colores de vértice
 
 	terrain_mesh_instance.mesh = final_mesh
 	terrain_mesh_instance.set_surface_override_material(0, material)
@@ -164,12 +175,45 @@ func generate_rocks() -> void:
 	rock_mat.albedo_color = Color(0.18, 0.16, 0.14)
 	rock_mat.roughness = 0.85
 	rock_mat.metallic = 0.0
+	
+	# Referencia al BiomeManager
+	var biome_manager = get_node_or_null("/root/Main/BiomeManager")
+	
+	# Ajustar cantidad de rocas segun bioma
+	var actual_rock_count = ROCK_COUNT
+	if biome_manager:
+		# Contar cuantas rocas por bioma
+		var rocky_count = 0
+		var other_count = 0
+		for _i in range(ROCK_COUNT):
+			var test_x = randf_range(-100.0, 100.0)
+			var test_z = randf_range(-100.0, 100.0)
+			var biome = biome_manager.get_biome_at_position(Vector3(test_x, 0, test_z))
+			var weights = biome_manager.get_spawn_weights(biome)
+			if weights.get("rocks", 1.0) > 1.5:
+				rocky_count += 1
+			else:
+				other_count += 1
+		# Mas rocas en zonas rocosas
+		actual_rock_count = ROCK_COUNT + rocky_count
 
 	var i = 0
-	while i < ROCK_COUNT:
+	while i < actual_rock_count:
 		var x = randf_range(-100.0, 100.0)
 		var z = randf_range(-100.0, 100.0)
 		var scale_factor = randf_range(1.5, 4.0)
+		
+		# Verificar peso de rocas en este bioma
+		var should_place = true
+		if biome_manager:
+			var biome = biome_manager.get_biome_at_position(Vector3(x, 0, z))
+			var weights = biome_manager.get_spawn_weights(biome)
+			var rock_weight = weights.get("rocks", 1.0)
+			if randf() > rock_weight * 0.4:
+				should_place = false
+		
+		if not should_place:
+			continue
 
 		if check_space_and_place(x, z, scale_factor * 1.5):
 			var static_body = StaticBody3D.new()
@@ -185,7 +229,26 @@ func generate_rocks() -> void:
 			sphere_mesh.radius = scale_factor
 			sphere_mesh.height = scale_factor * 2.0
 			mesh_instance.mesh = sphere_mesh
-			mesh_instance.set_surface_override_material(0, rock_mat)
+			
+			# Color de roca segun bioma
+			var rock_color_mat = StandardMaterial3D.new()
+			if biome_manager:
+				var biome = biome_manager.get_biome_at_position(Vector3(x, 0, z))
+				if biome == 1:
+					# ROCKY
+					rock_color_mat.albedo_color = Color(0.25, 0.22, 0.18)
+				elif biome == 3:
+					# BEACH
+					rock_color_mat.albedo_color = Color(0.30, 0.25, 0.20)
+				else:
+					rock_color_mat.albedo_color = Color(0.18, 0.16, 0.14)
+			else:
+				rock_color_mat.albedo_color = Color(0.18, 0.16, 0.14)
+			
+			rock_color_mat.roughness = 0.85
+			rock_color_mat.metallic = 0.0
+			
+			mesh_instance.set_surface_override_material(0, rock_color_mat)
 
 			static_body.add_child(mesh_instance)
 			static_body.add_child(collision)
@@ -203,16 +266,34 @@ func generate_grass() -> void:
 
 	var quad_mesh = QuadMesh.new()
 	quad_mesh.size = Vector2(0.5, 1.0)
+	mm.mesh = quad_mesh
+	
+	# ← NUEVO: Referencia al BiomeManager
+	var biome_manager = get_node_or_null("/root/Main/BiomeManager")
+	
+	# ← NUEVO: Color base de hierba según bioma (usamos verde bosque por defecto)
+	var grass_color = Color(0.12, 0.35, 0.08)
+	if biome_manager:
+		# Promedio de colores de vegetación
+		var avg_color = Color(0, 0, 0)
+		var sample_count = 0
+		for _s in range(20):
+			var sx = randf_range(-100.0, 100.0)
+			var sz = randf_range(-100.0, 100.0)
+			var c = biome_manager.get_vegetation_color(Vector3(sx, 0, sz))
+			avg_color += c
+			sample_count += 1
+		if sample_count > 0:
+			grass_color = avg_color / sample_count
 
 	var grass_mat = StandardMaterial3D.new()
-	grass_mat.albedo_color = Color(0.12, 0.35, 0.08)
+	grass_mat.albedo_color = grass_color
 	grass_mat.roughness = 0.8
 	grass_mat.metallic = 0.0
 	grass_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	grass_mat.alpha_scissor_threshold = 0.5
 	grass_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 
-	mm.mesh = quad_mesh
 	mm.instance_count = VEGETATION_COUNT
 	multimesh_instance.multimesh = mm
 	multimesh_instance.material_override = grass_mat
@@ -230,6 +311,13 @@ func generate_grass() -> void:
 			var t = Transform3D()
 			var random_height = randf_range(0.6, 1.3)
 			var random_rotation = randf_range(0, PI * 2)
+			
+			# ← NUEVO: Ajustar altura según bioma (menos hierba en rocoso)
+			if biome_manager:
+				var biome = biome_manager.get_biome_at_position(Vector3(x, 0, z))
+				var weights = biome_manager.get_spawn_weights(biome)
+				var bush_weight = weights.get("bushes", 1.0)
+				random_height *= bush_weight
 
 			t = t.scaled(Vector3(1.0, random_height, 1.0))
 			t = t.rotated(Vector3.UP, random_rotation)
@@ -244,14 +332,27 @@ func generate_trees() -> void:
 	var trunk_mat = StandardMaterial3D.new()
 	trunk_mat.albedo_color = Color(0.25, 0.15, 0.08)
 	trunk_mat.roughness = 0.9
-
-	var leaves_mat = StandardMaterial3D.new()
-	leaves_mat.albedo_color = Color(0.08, 0.25, 0.06)
-	leaves_mat.roughness = 0.8
+	
+	# ← NUEVO: Referencia al BiomeManager
+	var biome_manager = get_node_or_null("/root/Main/BiomeManager")
 
 	for i in range(tree_count):
 		var x = randf_range(-90.0, 90.0)
 		var z = randf_range(-90.0, 90.0)
+		
+		# ← NUEVO: Obtener pesos del bioma para decidir si poner árbol
+		var should_place = true
+		if biome_manager:
+			var pos = Vector3(x, 0, z)
+			var biome = biome_manager.get_biome_at_position(pos)
+			var weights = biome_manager.get_spawn_weights(biome)
+			var tree_weight = weights.get("trees", 1.0)
+			# Si el peso es bajo, hay menos probabilidad de árbol
+			if randf() > tree_weight * 0.5:
+				should_place = false
+		
+		if not should_place:
+			continue
 
 		if check_space_and_place(x, z, 3.0):
 			var tree = StaticBody3D.new()
@@ -276,12 +377,22 @@ func generate_trees() -> void:
 			trunk_collision.position = Vector3(0, 2.0, 0)
 			tree.add_child(trunk_collision)
 
+			# ← NUEVO: Hojas con color del bioma
 			var leaves = MeshInstance3D.new()
 			var leaves_mesh = SphereMesh.new()
 			leaves_mesh.radius = 2.5
 			leaves_mesh.height = 5.0
 			leaves.mesh = leaves_mesh
+			
+			var leaves_mat = StandardMaterial3D.new()
+			if biome_manager:
+				var pos = Vector3(x, 0, z)
+				leaves_mat.albedo_color = biome_manager.get_vegetation_color(pos)
+			else:
+				leaves_mat.albedo_color = Color(0.08, 0.25, 0.06)
+			leaves_mat.roughness = 0.8
 			leaves.set_surface_override_material(0, leaves_mat)
+			
 			leaves.position = Vector3(0, 5.0, 0)
 			tree.add_child(leaves)
 

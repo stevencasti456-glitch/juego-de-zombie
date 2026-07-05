@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://byku4wtyw7rx5"]
+
+[ext_resource type="Script" uid="uid://js212hm86oc1" path="res://scripts/loot/LootItem.gd" id="1_tdc8d"]
+
+[node name="AmmoLoot" type="Area3D" unique_id=449633100]
+script = ExtResource("1_tdc8d")

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bnw01501ckvkb"]
 
-[ext_resource type="Script" uid="uid://bxc5w7hnanfkq" path="res://scripts/weapons/shell_casing.gd" id="1_qpa1p"]
+[ext_resource type="Script" uid="uid://bxc5w7hnanfkq" path="res://scripts/weapons/shellcasing.gd" id="1_qpa1p"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_6ykuk"]
 top_radius = 0.015

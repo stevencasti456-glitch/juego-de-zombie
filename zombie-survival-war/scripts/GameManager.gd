@@ -14,6 +14,13 @@ var current_wave: int = 0
 @export var zombies_first_wave: int = 3
 @export var wave_increment: int = 2
 
+# --- Spawn Inteligente ---
+var biome_manager: Node = null
+var poi_manager: Node = null
+var spawn_zombies_outside_waves: bool = true  # Zombies extra por exploracion
+var ambient_zombie_timer: float = 0.0
+var ambient_zombie_interval: float = 8.0  # Cada 8 segundos un zombie ambiental
+
 # --- Variables internas ---
 var zombies_alive: int = 0
 var total_zombies_in_wave: int = 0
@@ -49,6 +56,15 @@ func _ready() -> void:
 
 	island = get_tree().get_root().find_child("Island", true, false)
 
+	# Buscar managers para spawn inteligente
+	biome_manager = get_tree().get_root().find_child("BiomeManager", true, false)
+	poi_manager = get_tree().get_root().find_child("POIManager", true, false)
+	
+	if biome_manager:
+		print("Spawn Inteligente: BiomeManager conectado")
+	if poi_manager:
+		print("Spawn Inteligente: POIManager conectado")
+
 	# Iniciar primera oleada después de 3 segundos
 	await get_tree().create_timer(3.0).timeout
 	start_next_wave()
@@ -62,6 +78,9 @@ func _process(delta: float) -> void:
 		wave_timer += delta
 		if wave_timer >= time_between_waves:
 			start_next_wave()
+	# Spawn ambiental de zombies segun exploracion
+	if spawn_zombies_outside_waves:
+		handle_ambient_zombies(delta)
 		return
 
 	# Verificar si todos los zombies murieron
@@ -92,7 +111,17 @@ func start_next_wave() -> void:
 	await spawn_zombies(zombie_count)
 
 	is_spawning = false
-
+	# Ajustar cantidad de zombies segun bioma del jugador
+	if biome_manager and player:
+		var biome = biome_manager.get_biome_at_position(player.global_position)
+		var weights = biome_manager.get_spawn_weights(biome)
+		var zombie_mult = weights.get("zombies", 1.0)
+		
+		var adjusted_count = int(zombie_count * zombie_mult)
+		if adjusted_count != zombie_count:
+			print("Spawn Inteligente: Oleada ajustada de ", zombie_count, " a ", adjusted_count, " (bioma: ", biome, ")")
+			total_zombies_in_wave = adjusted_count
+			zombies_alive = adjusted_count
 	wave_started.emit(current_wave, zombie_count)
 
 # ============================================================
@@ -234,23 +263,62 @@ func find_valid_spawn_position() -> Vector3:
 		return Vector3.ZERO
 
 	var attempts = 0
-	var max_attempts = 20
+	var max_attempts = 30
 
 	while attempts < max_attempts:
 		attempts += 1
 
-		# Posición aleatoria en círculo alrededor del jugador
+		# Posicion base: aleatoria en circulo alrededor del jugador
 		var angle = randf() * PI * 2
-		var distance = randf_range(20.0, 80.0)
+		var base_distance = randf_range(20.0, 80.0)
+		
+		# Ajustar distancia segun bioma
+		var distance = base_distance
+		if biome_manager:
+			var biome = biome_manager.get_biome_at_position(player.global_position)
+			match biome:
+				0:  # FOREST - Bosque: zombies mas cerca (peligroso)
+					distance = randf_range(15.0, 50.0)
+				1:  # ROCKY - Rocoso: zombies mas lejos (espacios abiertos)
+					distance = randf_range(30.0, 80.0)
+				2:  # PRAIRIE - Pradera: distancia normal
+					distance = randf_range(20.0, 60.0)
+				3:  # BEACH - Playa: zombies lejos (zona segura)
+					distance = randf_range(40.0, 90.0)
+		
 		var x = player.global_position.x + cos(angle) * distance
 		var z = player.global_position.z + sin(angle) * distance
 
 		var pos = Vector3(x, 0, z)
 		var dist_to_player = pos.distance_to(player.global_position)
 
-		if dist_to_player >= 15.0:
-			var y = get_terrain_height(x, z)
-			return Vector3(x, y + 1.0, z)
+		# Verificar distancia minima
+		if dist_to_player < 15.0:
+			continue
+		
+		# Verificar que no este demasiado cerca de un POI (zona segura temporal)
+		if poi_manager and poi_manager.active_pois:
+			for poi in poi_manager.active_pois:
+				var poi_type = poi.get_meta("poi_type", -1)
+				var dist_to_poi = pos.distance_to(poi.global_position)
+				
+				# Algunos POIs atraen zombies (campamento), otros los alejan
+				match poi_type:
+					3:  # CAMPSITE - Campamento: mas zombies cerca
+						if dist_to_poi < 15.0:
+							# Aceptar esta posicion (zona de riesgo)
+							pass
+					4:  # WATCHTOWER - Torre: menos zombies cerca
+						if dist_to_poi < 12.0:
+							continue  # Zona segura, no spawnear
+					1:  # GAS_STATION - Gasolinera: normal
+						pass
+					_:
+						if dist_to_poi < 8.0:
+							continue  # No spawnear encima de POIs
+
+		var y = get_terrain_height(x, z)
+		return Vector3(x, y + 1.0, z)
 
 	return Vector3.ZERO
 
@@ -264,3 +332,64 @@ func get_terrain_height(x: float, z: float) -> float:
 	if dist > 120.0:
 		height -= (dist - 120.0) * 1.5
 	return height
+
+# ============================================================
+# SPAWN AMBIENTAL INTELIGENTE
+# Zombies extra que aparecen mientras exploras
+# ============================================================
+func handle_ambient_zombies(delta: float) -> void:
+	if not is_wave_active:
+		return  # Solo durante oleadas activas
+	
+	ambient_zombie_timer += delta
+	if ambient_zombie_timer < ambient_zombie_interval:
+		return
+	
+	ambient_zombie_timer = 0.0
+	
+	# Calcular probabilidad de spawn ambiental segun bioma
+	var spawn_chance = 0.3  # 30% base
+	var max_ambient = 2     # Max 2 zombies ambientales por intervalo
+	
+	if biome_manager and player:
+		var biome = biome_manager.get_biome_at_position(player.global_position)
+		match biome:
+			0:  # FOREST - Bosque: mas spawn ambiental
+				spawn_chance = 0.6
+				max_ambient = 3
+			1:  # ROCKY - Rocoso: menos spawn
+				spawn_chance = 0.2
+				max_ambient = 1
+			2:  # PRAIRIE - Pradera: normal
+				spawn_chance = 0.4
+				max_ambient = 2
+			3:  # BEACH - Playa: muy poco spawn
+				spawn_chance = 0.1
+				max_ambient = 1
+	
+	# Verificar POIs cercanos para multiplicador adicional
+	var poi_multiplier = 1.0
+	if poi_manager and poi_manager.active_pois:
+		for poi in poi_manager.active_pois:
+			var dist = poi.global_position.distance_to(player.global_position)
+			if dist < 25.0:
+				var poi_type = poi.get_meta("poi_type", -1)
+				var poi_zombie_mult = poi.get_meta("zombie_multiplier", 1.0)
+				if poi_zombie_mult > 1.0:
+					poi_multiplier = max(poi_multiplier, poi_zombie_mult)
+					print("Spawn Inteligente: Cerca de ", poi.get_meta("poi_name", "POI"), 
+						  " | Multiplicador: ", poi_zombie_mult)
+	
+	# Aplicar multiplicador de POI
+	spawn_chance *= poi_multiplier
+	max_ambient = int(max_ambient * poi_multiplier)
+	
+	# Spawnear zombies ambientales
+	if randf() < spawn_chance:
+		var count = randi_range(1, max_ambient)
+		print("Spawn Inteligente: ", count, " zombie(s) ambiental(es) en ", 
+			  biome_manager.get_biome_name(player.global_position) if biome_manager else "desconocido")
+		
+		for _i in range(count):
+			spawn_single_zombie()
+			await get_tree().create_timer(0.3).timeout

@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://3sbrhie2sgff" path="res://scripts/Island.gd" id="1_sugp2"]
 [ext_resource type="Script" uid="uid://odjr5bmtgm0q" path="res://scripts/Player.gd" id="2_jyhfs"]
 [ext_resource type="PackedScene" uid="uid://xilofqs2lcs7" path="res://scenes/Zombie.tscn" id="3_tbgi4"]
+[ext_resource type="Script" uid="uid://dvnumat5b1kq7" path="res://scripts/inventory/Inventory.gd" id="4_jyhfs"]
 
 [sub_resource type="Environment" id="Environment_eyj0i"]
 fog_enabled = true
@@ -83,3 +84,6 @@ mesh = SubResource("CylinderMesh_eyj0i")
 
 [node name="Zombie" parent="." unique_id=1612897889 instance=ExtResource("3_tbgi4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 25, 20)
+
+[node name="Inventory" type="CanvasLayer" parent="." unique_id=96427232]
+script = ExtResource("4_jyhfs")
